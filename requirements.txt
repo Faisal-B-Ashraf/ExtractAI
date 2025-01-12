@@ -1,0 +1,4 @@
+openai
+pdfplumber
+tiktoken
+python-dotenv

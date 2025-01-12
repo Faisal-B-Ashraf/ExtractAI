@@ -1,0 +1,41 @@
+# Ignore the .env file containing sensitive API keys
+.env
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore database files
+*.db
+
+# Ignore log files
+*.log
+
+# Ignore output or temporary files
+data/output/
+*.csv
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore virtual environments
+venv/
+env/
+
+
+# Ignore all PDF files
+All_Pdfs/
+
+# Ignore database files
+Database/
+
+# Ignore environment files
+.env
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore large generated files
+*.log
