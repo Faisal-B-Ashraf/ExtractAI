@@ -1,6 +1,12 @@
 # ExtractAI
 
-ExtractAI is a document processing pipeline designed to extract structured data from unstructured text in PDFs. It allows users to define custom tasks, prompts, and configurations to extract specific information efficiently.
+ExtractAI is a modular document processing pipeline designed to extract structured data from unstructured text in PDFs. It supports custom task definitions, dynamic database schema updates, and token calibration for efficient LLM integration.
+
+Key Features
+Dynamic Token Calibration: Automatically adjusts token size to ensure efficient API utilization.
+Database Schema Auto-Update: Adding a task in task_definitions.py automatically creates corresponding columns in the SQLite database.
+Customizable Pipeline: Tailor task definitions to extract specific data for your use case.
+Model Flexibility: Supports different LLM models via the model parameter in api_handler.py (e.g., model="gpt-4o-mini", default to OpenAI API compatibility).
 
 ---
 
@@ -128,3 +134,4 @@ ExtractAI/
 - **Input PDFs:** Place all PDF files in the folder specified by `PDF_FOLDER`.
 - **Database Updates:** If a document has already been processed, tasks will be skipped unless task definitions are modified.
 - **Error Handling:** Errors during processing are logged, and other tasks will continue to execute.
+- **Adding New Tasks:** When you add a new task, corresponding database columns will be created automatically. Adjust task definitions in task_definitions.py as needed.
