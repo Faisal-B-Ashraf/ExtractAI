@@ -5,10 +5,8 @@ import os
 load_dotenv()
 
 # Paths
-DB_PATH = "D:/Oakridge/Projects/LLM/Database/processed_data.db"
-PDF_FOLDER = "D:/Oakridge/Projects/LLM/All_Pdfs"
+DB_PATH = "./processed_data.db"
+PDF_FOLDER = "/Users/ay5/Desktop/Faisal"
 
-OUTPUT_FOLDER = "D:/Oakridge/Projects/LLM/Output"
+OUTPUT_FOLDER = "./Output"
 
-# OpenAI API Key
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
