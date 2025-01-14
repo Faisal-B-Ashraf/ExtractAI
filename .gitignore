@@ -39,3 +39,6 @@ __pycache__/
 
 # Ignore large generated files
 *.log
+
+# hjy added quick
+Faisal/
