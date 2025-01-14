@@ -6,7 +6,7 @@ load_dotenv()
 
 # Paths
 DB_PATH = "./processed_data.db"
-PDF_FOLDER = "/Users/ay5/Desktop/Faisal"
+PDF_FOLDER = "./Faisal"
 
 OUTPUT_FOLDER = "./Output"
 

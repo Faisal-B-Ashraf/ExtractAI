@@ -6,11 +6,16 @@ from task_definitions import get_prompts
 import hashlib
 import os
 
+# Disable GPU - okay for inference
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+
 def calculate_prompt_hash(task):
     """
     Calculate the hash of the task prompt.
     """
-    prompt_data = f"{task['system_message']}{task['user_preamble']}"
+    # prompt_data = f"{task['system_message']}{task['user_preamble']}"
+    prompt_data = task
     return hashlib.sha256(prompt_data.encode()).hexdigest()
 
 def task_requires_reprocessing(stored_data, task_name, current_hash):
@@ -60,7 +65,8 @@ def main():
 
         # Split text into chunks
         chunks = split_text_by_tokens(text)
-        print(f"Number of chunks created for {pdf_file}: {len(chunks)}")
+        # chunks = text
+        # print(f"Number of chunks created for {pdf_file}: {len(chunks)}")
 
         structured_data = {}
 
@@ -70,10 +76,13 @@ def main():
             # Process Dam_Name task
             dam_name_hash = calculate_prompt_hash(prompts["Dam_Name"])
             result = analyze_chunk(chunk, prompts["Dam_Name"])
-            task_value = result.get("value", "").strip()
-            task_context = result.get("context", "").strip()
 
-            if task_value:
+            # task_value = result.get("value", "").strip()
+            # task_context = result.get("context", "").strip()
+            task_value = result['value']
+            task_context = result['context']
+
+            if task_value != 'Not mentioned':  # HJY - quick and dirty fix to avoid Dam name not found
                 dam_name = task_value  # Set dam_name
                 if dam_name not in structured_data:
                     structured_data[dam_name] = {"dam_name": dam_name}
@@ -108,8 +117,10 @@ def main():
                 try:
                     print(f"Reprocessing task '{task_name}' for dam '{dam_name}'.")
                     result = analyze_chunk(chunk, task)
-                    task_value = result.get("value", "").strip()
-                    task_context = result.get("context", "").strip()
+                    # task_value = result.get("value", "").strip()
+                    # task_context = result.get("context", "").strip()
+                    task_value = result['value']
+                    task_context = result['context']
 
                     structured_data[dam_name][f"{task_name}_value"] = task_value
                     structured_data[dam_name][f"{task_name}_context"] = task_context

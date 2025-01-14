@@ -3,6 +3,43 @@
 import time
 import math
 
+
+import os
+
+# Disable GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+import threading
+import subprocess
+import time
+
+
+def run_ollama_serve():
+    subprocess.Popen(["ollama", "serve"])
+
+
+thread = threading.Thread(target=run_ollama_serve)
+thread.start()
+time.sleep(5)
+
+
+from langchain_core.output_parsers import JsonOutputParser
+from langchain.output_parsers import OutputFixingParser
+
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama.llms import OllamaLLM
+from langchain_core.exceptions import OutputParserException
+
+# Initialize the LLM
+llm = OllamaLLM(model="llama3.3")
+
+# Initialize the JSON output parser
+json_parser = JsonOutputParser()
+
+# Initialize the output parser
+output_parser = OutputFixingParser.from_llm(parser=json_parser, llm=llm)
+
+
 # openai.api_key = OPENAI_API_KEY
 
 # Rolling token usage tracking
@@ -43,44 +80,31 @@ def analyze_chunk(chunk, task):
     global dynamic_delay
     while True:
         try:
-            # Build the prompt
-            prompt = f"{task['user_preamble']}{chunk}"
-            # response = openai.ChatCompletion.create(
-            #     model="gpt-4o-mini",
-            #     messages=[
-            #         {"role": "system", "content": task["system_message"]},
-            #         {"role": "user", "content": prompt}
-            #     ],
-            #     max_tokens=200
-            # )
+            prompt = ChatPromptTemplate.from_template(task)
 
-            # Update calibration based on token usage
-            # total_tokens_used = len(prompt) + 200  # Add response token limit
-            # update_calibration(total_tokens_used)
+            chain = prompt | llm | output_parser
 
-            # Apply dynamic delay
-            # time.sleep(dynamic_delay)
+            response = chain.invoke({"question": chunk})
 
-            # Extract the content of the API response
-            api_response = response['choices'][0]['message']['content']
-            value, context = parse_response(api_response)
+            value, context = response['value'], response['context']
+
             return {"value": value, "context": context}
 
-        except openai.error.RateLimitError:
-            print("Rate limit reached. Retrying in 60 seconds...")
-            time.sleep(60)
+        # except openai.error.RateLimitError:
+        #     print("Rate limit reached. Retrying in 60 seconds...")
+        #     time.sleep(60)
         except Exception as e:
             print(f"Error: {e}. Retrying...")
             time.sleep(10)
 
-def parse_response(api_response):
-    """
-    Parses the API response to extract value and context.
-    """
-    if "- Value:" in api_response and "- Context:" in api_response:
-        value_start = api_response.find("- Value:") + len("- Value:")
-        context_start = api_response.find("- Context:")
-        value = api_response[value_start:context_start].strip()
-        context = api_response[context_start + len("- Context:"):].strip()
-        return value, context
-    return api_response, ""
+# def parse_response(api_response):
+#     """
+#     Parses the API response to extract value and context.
+#     """
+#     if "- Value:" in api_response and "- Context:" in api_response:
+#         value_start = api_response.find("- Value:") + len("- Value:")
+#         context_start = api_response.find("- Context:")
+#         value = api_response[value_start:context_start].strip()
+#         context = api_response[context_start + len("- Context:"):].strip()
+#         return value, context
+#     return api_response, ""

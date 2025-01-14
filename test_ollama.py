@@ -1,9 +1,17 @@
+import os
+
+# Disable GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 import threading
 import subprocess
 import time
 
+
 def run_ollama_serve():
     subprocess.Popen(["ollama", "serve"])
+
+
 thread = threading.Thread(target=run_ollama_serve)
 thread.start()
 time.sleep(5)
@@ -47,7 +55,6 @@ output_parser = OutputFixingParser.from_llm(parser=json_parser, llm=llm)
 
 # Create the LLM chain with the prompt, model, and output parser
 chain = prompt | llm | output_parser
-
 
 
 # Define your queries
