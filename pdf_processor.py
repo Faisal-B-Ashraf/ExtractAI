@@ -18,7 +18,7 @@ def extract_text_from_pdf(pdf_path):
 
 
 
-def split_text_by_tokens(text, max_tokens=100000):
+def split_text_by_tokens_old(text, max_tokens=100000):
     text = text.replace("\t", " ")
     sentences = [s.lstrip() for s in text.splitlines() if s]
     sentences = [re.sub(" +", " ", x) for x in sentences]
@@ -37,3 +37,20 @@ def split_text_by_tokens(text, max_tokens=100000):
             sen = ""
 
     return ret
+
+
+def split_text_by_tokens(text, word_length=1000, overlap=100):
+    words = text.split()  # Split the text into words
+    result = []
+    start = 0
+    n = len(words)
+    
+    while start < n:
+        # Calculate the end index for the current segment
+        end = min(start + word_length, n)
+        result.append(" ".join(words[start:end]))
+        
+        # Move the start index forward, including the overlap
+        start = end - overlap if end - overlap > start else end
+    
+    return result

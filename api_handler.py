@@ -31,7 +31,7 @@ from langchain_ollama.llms import OllamaLLM
 from langchain_core.exceptions import OutputParserException
 
 # Initialize the LLM
-llm = OllamaLLM(model="llama3.3")
+llm = OllamaLLM(model="phi4")
 
 # Initialize the JSON output parser
 json_parser = JsonOutputParser()
