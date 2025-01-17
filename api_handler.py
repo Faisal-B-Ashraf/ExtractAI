@@ -1,26 +1,20 @@
-# import openai
-# from project_config import OPENAI_API_KEY
 import time
-import math
+# import math
+# import os
 
+# # Disable GPU
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-import os
+# import threading
+# import subprocess
+# import time
 
-# Disable GPU
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+# def run_ollama_serve():
+#     subprocess.Popen(["ollama", "serve"])
 
-import threading
-import subprocess
-import time
-
-
-def run_ollama_serve():
-    subprocess.Popen(["ollama", "serve"])
-
-
-thread = threading.Thread(target=run_ollama_serve)
-thread.start()
-time.sleep(5)
+# thread = threading.Thread(target=run_ollama_serve)
+# thread.start()
+# time.sleep(5)
 
 
 from langchain_core.output_parsers import JsonOutputParser
@@ -31,6 +25,7 @@ from langchain_ollama.llms import OllamaLLM
 from langchain_core.exceptions import OutputParserException
 
 # Initialize the LLM
+# llm = OllamaLLM(model="llama3.3")
 llm = OllamaLLM(model="phi4")
 
 # Initialize the JSON output parser

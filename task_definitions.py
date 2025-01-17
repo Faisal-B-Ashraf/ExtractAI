@@ -8,6 +8,7 @@ def get_prompts():
 system_message: You are an assistant that extracts the name of the dam, project, lock, or relevant structure mentioned in the document.
 user_preamble:
     Extract the name of the dam, project, lock, or relevant structure explicitly mentioned in the text.
+    For the "value", just the dam name, not the full sentence. Make it short and concise.
     Ensure your output strictly follows this JSON format:
     ```
     {{
@@ -24,6 +25,7 @@ Question: {question}
 system_message: You are an assistant that extracts the location of the dam or project explicitly mentioned in the document.
 user_preamble:
     Extract the location of the dam or project as explicitly stated in the text.
+    For the "value", just answer the location, not the full sentence. Make it short and concise.
     Ensure your output strictly follows this JSON format:
     ```
     {{
@@ -40,6 +42,7 @@ Question: {question}
 system_message: You are an assistant that extracts the county or counties where the dam or project is located, as mentioned in the document.
 user_preamble:
     Extract the county or counties where the dam or project is located as explicitly stated in the text.
+    For the "value", just the county name(s), not the full sentence. Make it short and concise.
     Ensure your output strictly follows this JSON format:
     ```
     {{
@@ -51,271 +54,271 @@ user_preamble:
 Question: {question}
 """
 ,
-        "Primary_Purpose": 
-"""
-system_message: You are an assistant that identifies the primary purpose of the dam or project as described in the document.
-user_preamble:
-    Identify the primary purpose of the dam or project as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the primary purpose here, such as flood control, hydropower, navigation, irrigation, recreation, water supply, or environmental conservation]",
-        "context": "[If multiple purposes are mentioned, provide additional notes or justifications for selecting the primary one based on the text's emphasis]"
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Minimum_Flow": 
-"""
-system_message: You are an assistant that analyzes dam flow requirements from the Water Control Manual (WCM) or FERC license documents. Your task is to extract the single most operationally critical minimum flow value and provide detailed context.
-user_preamble:
-    Extract the minimum flow information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the single most critical minimum flow value here in cubic feet per second (cfs)]",
-        "context": "[Provide detailed explanations, including the type of flow (e.g., instantaneous, daily, weekly average), conditions or regulatory requirements tied to the flow (e.g., seasonal needs, inflow thresholds, fish spawning mandates), and timeframes or situations (e.g., 'Nov 1 - Jan 15 for chum spawning')]"
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Usable_Storage_Volume": 
-"""
-system_message: You are an assistant that analyzes documents for storage volumes associated with dams or reservoirs. Your task is to extract the usable storage volume if explicitly stated, or infer it based on operational pool ranges, total storage, and flood storage data provided in the document.
-user_preamble:
-    Extract the usable storage volume as explicitly stated or inferred from the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the operationally usable storage volume here, converted to acre-feet]",
-        "context": "[If no explicit value is provided, infer the usable storage volume using the following methodology: (1) If operational pool ranges are provided (e.g., minimum and maximum pool elevations), calculate the usable storage volume based on storage at these elevations. (2) Use the formula: Usable Storage Volume = Total Storage Volume - Dead Storage Volume - Flood Storage Volume (if explicitly mentioned). Include details on specific terms or values used (e.g., 'total storage,' 'active storage,' 'flood storage'), elevations or ranges, whether flood storage is included or excluded, and any assumptions or ambiguities.]"
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Stream_Temperature": 
-"""
-system_message: You are an assistant tasked with analyzing stream temperature management for dams. Your goal is to extract key details about temperature regulation, infrastructure, and ecological considerations explicitly mentioned in the document.
-user_preamble:
-    Extract information related to stream temperature management as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert a short summary about whether stream temperature is actively managed and, if so, how]",
-        "context": {{
-            "question_1": "[Does the release of water need to be managed to control water temperature downstream? Provide details]",
-            "question_2": "[What specific regulations are in place regarding downstream temperature? Provide details]",
-            "question_3": "[Does the reservoir become stratified? If so, provide details]",
-            "question_4": "[Does the dam have selective withdrawal infrastructure to control water release temperature? If yes, describe it]",
-            "question_5": "[What is the primary reason for stream temperature control (e.g., fish habitats, ecological factors, thermoelectric power plants)? Provide details]"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Maximum_Pool_Elevation": 
-"""
-system_message: You are an assistant tasked with extracting and converting maximum pool elevation data for hydropower reservoirs. Your goal is to extract elevation values and ensure they are expressed in feet (ft), while documenting any explicitly stated details in the context field.
-user_preamble:
-    Extract the maximum pool elevation information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the maximum pool elevation here in feet (ft), converted if necessary, or 'Not mentioned']",
-        "context": {{
-            "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
-            "purpose_or_conditions": "[Provide any purpose, conditions, or constraints related to this elevation explicitly described in the document, or 'Not mentioned']",
-            "references_to_other_elevations": "[Provide references to other elevations explicitly mentioned in the document, or 'Not mentioned']",
-            "regulatory_or_safety_requirements": "[Provide any regulatory or safety requirements tied to this elevation explicitly stated in the document, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Normal_Maximum_Operating_Pool_Level": 
-"""
-system_message: You are an assistant tasked with extracting the Normal Maximum Operating Pool Level from hydropower-related documents. This level reflects the highest water level typically maintained under normal operating conditions.
-user_preamble:
-    Extract the Normal Maximum Operating Pool Level information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the Normal Maximum Operating Pool Level here in feet (ft), converted if necessary, or 'Not mentioned']",
-        "context": {{
-            "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
-            "operational_purpose_or_constraints": "[Provide any explicitly stated operational purpose, constraints, or conditions tied to this level, or 'Not mentioned']",
-            "references_to_other_water_levels": "[Provide references to other water levels (e.g., flood surcharge level, minimum operating level) explicitly mentioned in the document, or 'Not mentioned']",
-            "regulatory_or_safety_requirements": "[Provide any regulatory or safety requirements tied to this level explicitly stated in the document, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Maximum_Operating_Pool_Level": 
-"""
-system_message: You are an assistant tasked with extracting the Maximum Operating Pool Level from hydropower-related documents. This level represents the highest water level that can be maintained during controlled operations under safe conditions.
-user_preamble:
-    Extract the Maximum Operating Pool Level information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the Maximum Operating Pool Level here in feet (ft), converted if necessary, or 'Not mentioned']",
-        "context": {{
-            "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
-            "operational_purpose_or_constraints": "[Provide any explicitly stated operational purpose, constraints, or conditions tied to this level, or 'Not mentioned']",
-            "references_to_other_water_levels": "[Provide references to other water levels (e.g., Normal Maximum Operating Pool Level, Maximum Pool Elevation) explicitly mentioned in the document, or 'Not mentioned']",
-            "regulatory_or_safety_requirements": "[Provide any regulatory or safety requirements tied to this level explicitly stated in the document, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Minimum_Pool_Elevation": 
-"""
-system_message: You are an assistant tasked with extracting the Minimum Pool Elevation from hydropower-related documents. This level represents the lowest water elevation at which normal operations can be maintained.
-user_preamble:
-    Extract the Minimum Pool Elevation information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the Minimum Pool Elevation here in feet (ft), converted if necessary, or 'Not mentioned']",
-        "context": {{
-            "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
-            "operational_purpose_or_constraints": "[Provide any explicitly stated operational purpose, constraints, or conditions tied to this level, or 'Not mentioned']",
-            "references_to_other_water_levels": "[Provide references to other water levels (e.g., normal or maximum pool levels) explicitly mentioned in the document, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Power_Head": 
-"""
-system_message: You are an assistant tasked with extracting the Power Head from hydropower-related documents. This refers to the effective vertical height of water available to drive the turbines.
-user_preamble:
-    Extract the Power Head information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the Power Head here in feet (ft), converted if necessary, or 'Not mentioned']",
-        "context": {{
-            "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
-            "operational_conditions_or_constraints": "[Provide any explicitly stated operational conditions or constraints tied to the Power Head, or 'Not mentioned']",
-            "references_to_related_metrics": "[Provide references to other related metrics (e.g., pool elevations) explicitly mentioned in the document, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Power_Capacity": 
-"""
-system_message: You are an assistant tasked with extracting the Power Capacity of a hydropower plant from relevant documents. This refers to the total installed turbine capacity in megawatts (MW).
-user_preamble:
-    Extract the Power Capacity information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the Power Capacity here in MW or 'Not mentioned']",
-        "context": {{
-            "references_to_turbine_capacities": "[Provide any references to individual turbine capacities or total installed capacity explicitly mentioned in the document, or 'Not mentioned']",
-            "operational_details": "[Provide additional operational details explicitly tied to the power capacity, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Annual_Flow_Peak": 
-"""
-system_message: You are an assistant tasked with extracting the Annual Flow Peak from hydropower-related documents. This represents the highest flow rate measured during a year.
-user_preamble:
-    Extract the Annual Flow Peak information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the Annual Flow Peak here in cubic feet per second (cfs) or 'Not mentioned']",
-        "context": {{
-            "timeframes_or_conditions": "[Provide any references to specific timeframes, conditions, or events tied to the peak flow explicitly mentioned in the document, or 'Not mentioned']",
-            "regulatory_or_operational_details": "[Provide any regulatory or operational details explicitly associated with the peak flow, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Annual_Flow_Mean": 
-"""
-system_message: You are an assistant tasked with extracting the Annual Flow Mean from hydropower-related documents. This represents the average flow rate over a year.
-user_preamble:
-    Extract the Annual Flow Mean information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the Annual Flow Mean here in cubic feet per second (cfs) or 'Not mentioned']",
-        "context": {{
-            "timeframes_or_averaging_methods": "[Provide any references to specific timeframes or averaging methods used explicitly mentioned in the document, or 'Not mentioned']",
-            "regulatory_or_operational_details": "[Provide any regulatory or operational details explicitly associated with the mean flow, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Spillway_Maximum_Discharge_Flow": 
-"""
-system_message: You are an assistant tasked with extracting the Spillway Maximum Discharge Flow from hydropower-related documents. This represents the maximum flow capacity of the spillway.
-user_preamble:
-    Extract the Spillway Maximum Discharge Flow information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the Spillway Maximum Discharge Flow here in cubic feet per second (cfs) or 'Not mentioned']",
-        "context": {{
-            "conditions_or_constraints": "[Provide any conditions, scenarios, or constraints tied to the spillway's maximum capacity explicitly mentioned in the document, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
-,
-        "Energy_Output": 
-"""
-system_message: You are an assistant tasked with extracting the Energy Output from hydropower-related documents. This refers to the estimated annual generation in megawatt-hours (MWh).
-user_preamble:
-    Extract the Energy Output information as explicitly stated in the text.
-    Ensure your output strictly follows this JSON format:
-    ```
-    {{
-        "value": "[Insert the estimated annual energy generation here in megawatt-hours (MWh) or 'Not mentioned']",
-        "context": {{
-            "estimation_details": "[Provide any details regarding how the energy output was estimated explicitly mentioned in the document, or 'Not mentioned']"
-        }}
-    }}
-    ```
-    Do not include any text outside this JSON object.
-Question: {question}
-"""
+#         "Primary_Purpose": 
+# """
+# system_message: You are an assistant that identifies the primary purpose of the dam or project as described in the document.
+# user_preamble:
+#     Identify the primary purpose of the dam or project as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the primary purpose here, such as flood control, hydropower, navigation, irrigation, recreation, water supply, or environmental conservation]",
+#         "context": "[If multiple purposes are mentioned, provide additional notes or justifications for selecting the primary one based on the text's emphasis]"
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Minimum_Flow": 
+# """
+# system_message: You are an assistant that analyzes dam flow requirements from the Water Control Manual (WCM) or FERC license documents. Your task is to extract the single most operationally critical minimum flow value and provide detailed context.
+# user_preamble:
+#     Extract the minimum flow information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the single most critical minimum flow value here in cubic feet per second (cfs)]",
+#         "context": "[Provide detailed explanations, including the type of flow (e.g., instantaneous, daily, weekly average), conditions or regulatory requirements tied to the flow (e.g., seasonal needs, inflow thresholds, fish spawning mandates), and timeframes or situations (e.g., 'Nov 1 - Jan 15 for chum spawning')]"
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Usable_Storage_Volume": 
+# """
+# system_message: You are an assistant that analyzes documents for storage volumes associated with dams or reservoirs. Your task is to extract the usable storage volume if explicitly stated, or infer it based on operational pool ranges, total storage, and flood storage data provided in the document.
+# user_preamble:
+#     Extract the usable storage volume as explicitly stated or inferred from the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the operationally usable storage volume here, converted to acre-feet]",
+#         "context": "[If no explicit value is provided, infer the usable storage volume using the following methodology: (1) If operational pool ranges are provided (e.g., minimum and maximum pool elevations), calculate the usable storage volume based on storage at these elevations. (2) Use the formula: Usable Storage Volume = Total Storage Volume - Dead Storage Volume - Flood Storage Volume (if explicitly mentioned). Include details on specific terms or values used (e.g., 'total storage,' 'active storage,' 'flood storage'), elevations or ranges, whether flood storage is included or excluded, and any assumptions or ambiguities.]"
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Stream_Temperature": 
+# """
+# system_message: You are an assistant tasked with analyzing stream temperature management for dams. Your goal is to extract key details about temperature regulation, infrastructure, and ecological considerations explicitly mentioned in the document.
+# user_preamble:
+#     Extract information related to stream temperature management as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert a short summary about whether stream temperature is actively managed and, if so, how]",
+#         "context": {{
+#             "question_1": "[Does the release of water need to be managed to control water temperature downstream? Provide details]",
+#             "question_2": "[What specific regulations are in place regarding downstream temperature? Provide details]",
+#             "question_3": "[Does the reservoir become stratified? If so, provide details]",
+#             "question_4": "[Does the dam have selective withdrawal infrastructure to control water release temperature? If yes, describe it]",
+#             "question_5": "[What is the primary reason for stream temperature control (e.g., fish habitats, ecological factors, thermoelectric power plants)? Provide details]"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Maximum_Pool_Elevation": 
+# """
+# system_message: You are an assistant tasked with extracting and converting maximum pool elevation data for hydropower reservoirs. Your goal is to extract elevation values and ensure they are expressed in feet (ft), while documenting any explicitly stated details in the context field.
+# user_preamble:
+#     Extract the maximum pool elevation information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the maximum pool elevation here in feet (ft), converted if necessary, or 'Not mentioned']",
+#         "context": {{
+#             "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
+#             "purpose_or_conditions": "[Provide any purpose, conditions, or constraints related to this elevation explicitly described in the document, or 'Not mentioned']",
+#             "references_to_other_elevations": "[Provide references to other elevations explicitly mentioned in the document, or 'Not mentioned']",
+#             "regulatory_or_safety_requirements": "[Provide any regulatory or safety requirements tied to this elevation explicitly stated in the document, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Normal_Maximum_Operating_Pool_Level": 
+# """
+# system_message: You are an assistant tasked with extracting the Normal Maximum Operating Pool Level from hydropower-related documents. This level reflects the highest water level typically maintained under normal operating conditions.
+# user_preamble:
+#     Extract the Normal Maximum Operating Pool Level information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the Normal Maximum Operating Pool Level here in feet (ft), converted if necessary, or 'Not mentioned']",
+#         "context": {{
+#             "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
+#             "operational_purpose_or_constraints": "[Provide any explicitly stated operational purpose, constraints, or conditions tied to this level, or 'Not mentioned']",
+#             "references_to_other_water_levels": "[Provide references to other water levels (e.g., flood surcharge level, minimum operating level) explicitly mentioned in the document, or 'Not mentioned']",
+#             "regulatory_or_safety_requirements": "[Provide any regulatory or safety requirements tied to this level explicitly stated in the document, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Maximum_Operating_Pool_Level": 
+# """
+# system_message: You are an assistant tasked with extracting the Maximum Operating Pool Level from hydropower-related documents. This level represents the highest water level that can be maintained during controlled operations under safe conditions.
+# user_preamble:
+#     Extract the Maximum Operating Pool Level information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the Maximum Operating Pool Level here in feet (ft), converted if necessary, or 'Not mentioned']",
+#         "context": {{
+#             "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
+#             "operational_purpose_or_constraints": "[Provide any explicitly stated operational purpose, constraints, or conditions tied to this level, or 'Not mentioned']",
+#             "references_to_other_water_levels": "[Provide references to other water levels (e.g., Normal Maximum Operating Pool Level, Maximum Pool Elevation) explicitly mentioned in the document, or 'Not mentioned']",
+#             "regulatory_or_safety_requirements": "[Provide any regulatory or safety requirements tied to this level explicitly stated in the document, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Minimum_Pool_Elevation": 
+# """
+# system_message: You are an assistant tasked with extracting the Minimum Pool Elevation from hydropower-related documents. This level represents the lowest water elevation at which normal operations can be maintained.
+# user_preamble:
+#     Extract the Minimum Pool Elevation information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the Minimum Pool Elevation here in feet (ft), converted if necessary, or 'Not mentioned']",
+#         "context": {{
+#             "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
+#             "operational_purpose_or_constraints": "[Provide any explicitly stated operational purpose, constraints, or conditions tied to this level, or 'Not mentioned']",
+#             "references_to_other_water_levels": "[Provide references to other water levels (e.g., normal or maximum pool levels) explicitly mentioned in the document, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Power_Head": 
+# """
+# system_message: You are an assistant tasked with extracting the Power Head from hydropower-related documents. This refers to the effective vertical height of water available to drive the turbines.
+# user_preamble:
+#     Extract the Power Head information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the Power Head here in feet (ft), converted if necessary, or 'Not mentioned']",
+#         "context": {{
+#             "original_value_and_unit": "[Provide the original value and unit as mentioned in the document (e.g., meters or another unit), or 'Not mentioned']",
+#             "operational_conditions_or_constraints": "[Provide any explicitly stated operational conditions or constraints tied to the Power Head, or 'Not mentioned']",
+#             "references_to_related_metrics": "[Provide references to other related metrics (e.g., pool elevations) explicitly mentioned in the document, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Power_Capacity": 
+# """
+# system_message: You are an assistant tasked with extracting the Power Capacity of a hydropower plant from relevant documents. This refers to the total installed turbine capacity in megawatts (MW).
+# user_preamble:
+#     Extract the Power Capacity information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the Power Capacity here in MW or 'Not mentioned']",
+#         "context": {{
+#             "references_to_turbine_capacities": "[Provide any references to individual turbine capacities or total installed capacity explicitly mentioned in the document, or 'Not mentioned']",
+#             "operational_details": "[Provide additional operational details explicitly tied to the power capacity, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Annual_Flow_Peak": 
+# """
+# system_message: You are an assistant tasked with extracting the Annual Flow Peak from hydropower-related documents. This represents the highest flow rate measured during a year.
+# user_preamble:
+#     Extract the Annual Flow Peak information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the Annual Flow Peak here in cubic feet per second (cfs) or 'Not mentioned']",
+#         "context": {{
+#             "timeframes_or_conditions": "[Provide any references to specific timeframes, conditions, or events tied to the peak flow explicitly mentioned in the document, or 'Not mentioned']",
+#             "regulatory_or_operational_details": "[Provide any regulatory or operational details explicitly associated with the peak flow, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Annual_Flow_Mean": 
+# """
+# system_message: You are an assistant tasked with extracting the Annual Flow Mean from hydropower-related documents. This represents the average flow rate over a year.
+# user_preamble:
+#     Extract the Annual Flow Mean information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the Annual Flow Mean here in cubic feet per second (cfs) or 'Not mentioned']",
+#         "context": {{
+#             "timeframes_or_averaging_methods": "[Provide any references to specific timeframes or averaging methods used explicitly mentioned in the document, or 'Not mentioned']",
+#             "regulatory_or_operational_details": "[Provide any regulatory or operational details explicitly associated with the mean flow, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Spillway_Maximum_Discharge_Flow": 
+# """
+# system_message: You are an assistant tasked with extracting the Spillway Maximum Discharge Flow from hydropower-related documents. This represents the maximum flow capacity of the spillway.
+# user_preamble:
+#     Extract the Spillway Maximum Discharge Flow information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the Spillway Maximum Discharge Flow here in cubic feet per second (cfs) or 'Not mentioned']",
+#         "context": {{
+#             "conditions_or_constraints": "[Provide any conditions, scenarios, or constraints tied to the spillway's maximum capacity explicitly mentioned in the document, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
+# ,
+#         "Energy_Output": 
+# """
+# system_message: You are an assistant tasked with extracting the Energy Output from hydropower-related documents. This refers to the estimated annual generation in megawatt-hours (MWh).
+# user_preamble:
+#     Extract the Energy Output information as explicitly stated in the text.
+#     Ensure your output strictly follows this JSON format:
+#     ```
+#     {{
+#         "value": "[Insert the estimated annual energy generation here in megawatt-hours (MWh) or 'Not mentioned']",
+#         "context": {{
+#             "estimation_details": "[Provide any details regarding how the energy output was estimated explicitly mentioned in the document, or 'Not mentioned']"
+#         }}
+#     }}
+#     ```
+#     Do not include any text outside this JSON object.
+# Question: {question}
+# """
 
     }
 
