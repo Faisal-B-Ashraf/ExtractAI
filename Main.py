@@ -39,6 +39,7 @@ def retain_existing_data(db_path, dam_name, structured_data):
 
 def save_results_to_csv(csv_path, structured_data, mode="w"):
     fieldnames = [
+        "filename",
         "chunk",  # Add 'chunk' here if you want it in the CSV
         "Dam_Name_value", "Dam_Name_context", "Dam_Name_hash",
         "Location_value", "Location_context", "Location_hash",
@@ -105,12 +106,13 @@ def main():
         for i, chunk in enumerate(chunks):
             chunk_key = f"chunk_{i+1}"
             structured_data[chunk_key] = {}
+            structured_data[chunk_key]['filename'] = pdf_file
             print(f"Processing chunk {i+1}/{len(chunks)} of file: {pdf_file}.")
 
             for task_name, task in prompts.items():
                 try:
                     print(f"  Running task '{task_name}' on chunk {chunk_key}.")
-                    result = analyze_chunk(chunk, task)
+                    result = analyze_chunk(chunk, task)                  
                     task_value = result['value']
                     task_context = result['context']
 
