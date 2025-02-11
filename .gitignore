@@ -13,7 +13,10 @@ __pycache__/
 
 # Ignore output or temporary files
 data/output/
+
+# Ignore all CSV files **except** results.csv
 *.csv
+!results.csv
 
 # Ignore system-specific files
 .DS_Store
