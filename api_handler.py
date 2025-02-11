@@ -1,42 +1,37 @@
 import time
+import traceback
 from langchain_core.output_parsers import JsonOutputParser
 from langchain.output_parsers import OutputFixingParser
-
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.exceptions import OutputParserException
 
-# Initialize the LLM
-llm = OllamaLLM(model="llama3.3")
-# llm = OllamaLLM(model="phi4")
-# llm = OllamaLLM(model="gemma2")
+# Initialize the LLM with explicit base_url
+llm = OllamaLLM(model="llama3.3", base_url="http://127.0.0.1:11434")
 
 # Initialize the JSON output parser
 json_parser = JsonOutputParser()
-
-# Initialize the output parser
 output_parser = OutputFixingParser.from_llm(parser=json_parser, llm=llm)
-
-
 
 def analyze_chunk(chunk, task):
     """
-    Analyzes a chunk of text using the OpenAI API and handles throttling.
+    Analyzes a chunk of text using the LLM API and handles errors.
     """
-    global dynamic_delay
-    while True:
-        try:
-            prompt = ChatPromptTemplate.from_template(task)
+    try:
+        prompt = ChatPromptTemplate.from_template(task)
+        chain = prompt | llm | output_parser
+        response = chain.invoke({"question": chunk})
 
-            chain = prompt | llm | output_parser
+        value, context = response.get('value', 'Error'), response.get('context', 'No context available')
 
-            response = chain.invoke({"question": chunk})
+        return {"value": value, "context": context}
 
-            value, context = response['value'], response['context']
+    except OutputParserException as e:
+        print(f"🔥 ERROR (OutputParserException): {e}")
+        print(traceback.format_exc())
+        return {"value": "Error", "context": f"OutputParserException: {e}"}
 
-            return {"value": value, "context": context}
-
-        except Exception as e:
-            print(f"Error: {e}.")
-            # return {"value": "Error", "context": f"{e}"}
-            return {"value": "Error", "context": f"Error"}
+    except Exception as e:
+        print(f"🔥 ERROR (General Exception): {e}")
+        print(traceback.format_exc())
+        return {"value": "Error", "context": f"Exception: {e}"}

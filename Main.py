@@ -3,84 +3,99 @@ from pdf_processor import extract_text_from_pdf, split_text_by_tokens
 from api_handler import analyze_chunk
 from db_manager import create_or_update_table, insert_results, get_stored_task_data
 from task_definitions import get_prompts
-import csv
+import pandas as pd
 import hashlib
 import os
+import multiprocessing
+import subprocess
+import traceback
 
+# Number of parallel processes for multiprocessing
+NUM_PROCESSES = multiprocessing.cpu_count()
 
+# Set the number of PDFs to process (comment out the next line to process all PDFs)
+PDF_LIMIT = 1  # Change this number to process fewer PDFs or comment out to process all.
+
+def test_ollama():
+    """Check if Ollama is running by making a direct request."""
+    try:
+        result = subprocess.run(
+            ["ollama", "run", "llama3.3", "What is 2+2?"],
+            capture_output=True, text=True, timeout=10
+        )
+        if "4" in result.stdout:
+            print("✅ Ollama is running correctly!")
+            return True
+        else:
+            print("🚨 Ollama response unexpected:", result.stdout)
+            return False
+    except Exception as e:
+        print(f"🔥 Ollama test failed: {e}")
+        return False
+
+# Check if Ollama is running before processing
+if not test_ollama():
+    print("🚨 ERROR: Ollama is not responding! Restart it with: `ollama serve &`")
+    exit(1)
 
 def calculate_prompt_hash(task):
-    """
-    Calculate the hash of the task prompt.
-    """
-    # prompt_data = f"{task['system_message']}{task['user_preamble']}"
-    prompt_data = task
-    return hashlib.sha256(prompt_data.encode()).hexdigest()
+    """Calculate the hash of the task prompt."""
+    return hashlib.sha256(task.encode()).hexdigest()
 
-def task_requires_reprocessing(stored_data, task_name, current_hash):
-    """
-    Determine if the task requires reprocessing based on stored data and hash.
-    """
-    stored_hash = stored_data.get(f"{task_name}_hash")
-    stored_value = stored_data.get(f"{task_name}_value")
-    return stored_hash != current_hash or not stored_value
+def generate_dynamic_fieldnames(prompts):
+    """Dynamically generate field names based on available task definitions."""
+    fieldnames = ["filename", "chunk"]
+    for task_name in prompts.keys():
+        fieldnames.extend([
+            f"{task_name}_value",
+            f"{task_name}_context",
+            f"{task_name}_hash"
+        ])
+    return fieldnames
 
-def retain_existing_data(db_path, dam_name, structured_data):
-    """
-    Retrieves existing data for the dam and retains values for skipped tasks.
-    """
-    existing_data = get_stored_task_data(db_path, dam_name)
-    if existing_data:
-        for key, value in existing_data.items():
-            # Only retain data if it's not already in the structured_data
-            if key not in structured_data or not structured_data[key]:
-                structured_data[key] = value
-    return structured_data
+def save_results_to_dataframe(structured_data, fieldnames):
+    """Convert structured data into a Pandas DataFrame for easy review."""
+    df = pd.DataFrame.from_dict(structured_data, orient="index")
+    df.reset_index(inplace=True)
+    df.rename(columns={"index": "chunk"}, inplace=True)
 
-def save_results_to_csv(csv_path, structured_data, mode="w"):
-    fieldnames = [
-        "filename",
-        "chunk",  # Add 'chunk' here if you want it in the CSV
-        "Dam_Name_value", "Dam_Name_context", "Dam_Name_hash",
-        "Location_value", "Location_context", "Location_hash",
-        "County_value", "County_context", "County_hash",
-        "Primary_Purpose_value", "Primary_Purpose_context", "Primary_Purpose_hash",
-        "Minimum_Flow_value", "Minimum_Flow_context", "Minimum_Flow_hash",
-        "Usable_Storage_Volume_value", "Usable_Storage_Volume_context", "Usable_Storage_Volume_hash",
-        "Stream_Temperature_value", "Stream_Temperature_context", "Stream_Temperature_hash",
-        "Maximum_Pool_Elevation_value", "Maximum_Pool_Elevation_context", "Maximum_Pool_Elevation_hash",
-        "Normal_Maximum_Operating_Pool_Level_value", "Normal_Maximum_Operating_Pool_Level_context", "Normal_Maximum_Operating_Pool_Level_hash",
-        "Maximum_Operating_Pool_Level_value", "Maximum_Operating_Pool_Level_context", "Maximum_Operating_Pool_Level_hash",
-        "Minimum_Pool_Elevation_value", "Minimum_Pool_Elevation_context", "Minimum_Pool_Elevation_hash",
-        "Power_Head_value", "Power_Head_context", "Power_Head_hash",
-        "Power_Capacity_value", "Power_Capacity_context", "Power_Capacity_hash",
-        "Annual_Flow_Peak_value", "Annual_Flow_Peak_context", "Annual_Flow_Peak_hash",
-        "Annual_Flow_Mean_value", "Annual_Flow_Mean_context", "Annual_Flow_Mean_hash",
-        "Spillway_Maximum_Discharge_Flow_value", "Spillway_Maximum_Discharge_Flow_context", "Spillway_Maximum_Discharge_Flow_hash",
-        "Energy_Output_value", "Energy_Output_context", "Energy_Output_hash"
-    ]
+    # Ensure DataFrame contains all expected columns
+    for field in fieldnames:
+        if field not in df.columns:
+            df[field] = None
 
-    file_exists = os.path.isfile(csv_path)
+    return df
 
-    with open(csv_path, mode=mode, newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        if not file_exists:  # Write header only if not already written
-            writer.writeheader()
-        for chunk, data in structured_data.items():
-            if "chunk" not in data:  # Add 'chunk' key to the data
-                data["chunk"] = chunk
-            writer.writerow(data)
-            
+def process_chunk(chunk_data):
+    """Process a single chunk of text with all tasks."""
+    chunk_key, chunk_text, pdf_file, prompts = chunk_data
+    chunk_results = {"filename": pdf_file, "chunk": chunk_key}
+
+    for task_name, task in prompts.items():
+        try:
+            print(f"  Running task '{task_name}' on chunk {chunk_key}.")
+            result = analyze_chunk(chunk_text, task)
+            chunk_results[f"{task_name}_value"] = result["value"]
+            chunk_results[f"{task_name}_context"] = result["context"]
+            chunk_results[f"{task_name}_hash"] = calculate_prompt_hash(task)
+        except Exception as e:
+            print(f"🔥 ERROR processing task {task_name} for chunk {chunk_key}:\n{traceback.format_exc()}")
+            chunk_results[f"{task_name}_value"] = "Error"
+            chunk_results[f"{task_name}_context"] = str(e)
+
+    return chunk_key, chunk_results
 
 def main():
-    # Load task prompts
     prompts = get_prompts()
-
-    # Process PDFs
-    pdf_folder = "./Faisal"  # Replace with your PDF folder path
-    output_csv = "results.csv"
-
+    fieldnames = generate_dynamic_fieldnames(prompts)
+    pdf_folder = "./Faisal"
     pdf_files = [file for file in os.listdir(pdf_folder) if file.endswith('.pdf')]
+
+    if 'PDF_LIMIT' in globals() and isinstance(PDF_LIMIT, int):
+        print(f"Limiting to the first {PDF_LIMIT} PDF file(s).")
+        pdf_files = pdf_files[:PDF_LIMIT]
+    else:
+        print("Processing all PDF files in the folder.")
 
     if not pdf_files:
         print(f"No PDF files found in folder: {pdf_folder}")
@@ -88,7 +103,7 @@ def main():
 
     structured_data = {}
 
-    print(f"Found {len(pdf_files)} PDF files to process.")
+    print(f"Processing {len(pdf_files)} PDF file(s)...")
 
     for pdf_file in pdf_files:
         print(f"Processing file: {pdf_file}")
@@ -99,36 +114,23 @@ def main():
             print(f"No text extracted from {pdf_file}. Skipping...")
             continue
 
-        # Split text into chunks
         chunks = split_text_by_tokens(text)
         print(f"Split text into {len(chunks)} chunks for file: {pdf_file}.")
 
-        for i, chunk in enumerate(chunks):
-            chunk_key = f"chunk_{i+1}"
-            structured_data[chunk_key] = {}
-            structured_data[chunk_key]['filename'] = pdf_file
-            print(f"Processing chunk {i+1}/{len(chunks)} of file: {pdf_file}.")
+        chunk_data = [(f"chunk_{i+1}", chunks[i], pdf_file, prompts) for i in range(len(chunks))]
 
-            for task_name, task in prompts.items():
-                try:
-                    print(f"  Running task '{task_name}' on chunk {chunk_key}.")
-                    result = analyze_chunk(chunk, task)                  
-                    task_value = result['value']
-                    task_context = result['context']
+        with multiprocessing.Pool(NUM_PROCESSES) as pool:
+            results = pool.map(process_chunk, chunk_data)
 
-                    structured_data[chunk_key][f"{task_name}_value"] = task_value
-                    structured_data[chunk_key][f"{task_name}_context"] = task_context
-                    structured_data[chunk_key][f"{task_name}_hash"] = calculate_prompt_hash(task)
-                except Exception as e:
-                    print(f"Error processing task {task_name} for chunk {chunk_key}: {e}")
+        for chunk_key, chunk_result in results:
+            structured_data[chunk_key] = chunk_result
 
-            # Save intermediate results to CSV
-            print(f"Saving intermediate results for chunk {chunk_key} to CSV...")
-            save_results_to_csv(output_csv, {chunk_key: structured_data[chunk_key]}, mode="a")
+    df = save_results_to_dataframe(structured_data, fieldnames)
+
+    import ace_tools as tools
+    tools.display_dataframe_to_user(name="Extracted Data", dataframe=df)
 
     print("\nProcessing complete.")
 
-
 if __name__ == "__main__":
     main()
-
